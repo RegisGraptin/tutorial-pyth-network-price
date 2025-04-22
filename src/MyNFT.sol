@@ -2,11 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {console} from "forge-std/console.sol";
-
-
-contract MyNFT {
+contract MyNFT is ERC20 {
 
     uint256 immutable PRICE_PRECISION = 1e18;
 
@@ -21,7 +19,7 @@ contract MyNFT {
     // Error raised if the payment is not sufficient
     error InsufficientFee();
  
-    constructor(address _pyth, bytes32 _ethUsdPriceId) {
+    constructor(address _pyth, bytes32 _ethUsdPriceId) ERC20("GIFT", "GFT") {
         pyth = IPyth(_pyth);
         ethUsdPriceId = _ethUsdPriceId;
     }
@@ -39,8 +37,11 @@ contract MyNFT {
 
         if (msg.value < requiredWeiPayment) revert InsufficientFee();
 
-        // Send a NFT for the user...
+        // Mint a new token for the user
+        _mint(msg.sender, 1);
 
+        // Refund the user
+        payable(msg.sender).transfer(msg.value - requiredWeiPayment);
     }
 
     function updateAndBuy(bytes[] calldata pythPriceUpdate) external payable {
