@@ -5,7 +5,6 @@ import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MyNFT is ERC20 {
-
     uint256 immutable PRICE_PRECISION = 1e18;
 
     uint256 immutable ETH_DECIMALS = 1e18;
@@ -18,19 +17,18 @@ contract MyNFT is ERC20 {
 
     // Error raised if the payment is not sufficient
     error InsufficientFee();
- 
+
     constructor(address _pyth, bytes32 _ethUsdPriceId) ERC20("GIFT", "GFT") {
         pyth = IPyth(_pyth);
         ethUsdPriceId = _ethUsdPriceId;
     }
 
     function buy() public payable {
-
         PythStructs.Price memory price = pyth.getPriceNoOlderThan(
             ethUsdPriceId,
-            60  // in seconds
+            60 // in seconds
         );
-    
+
         // ETH price will be a positive value
         uint256 priceValue = uint256(uint64(price.price));
         uint256 conf = uint256(price.conf);
@@ -54,7 +52,7 @@ contract MyNFT is ERC20 {
 
     function updateAndBuy(bytes[] calldata pythPriceUpdate) external payable {
         uint256 updateFee = pyth.getUpdateFee(pythPriceUpdate);
-        pyth.updatePriceFeeds{ value: updateFee }(pythPriceUpdate);
+        pyth.updatePriceFeeds{value: updateFee}(pythPriceUpdate);
         buy();
     }
 }

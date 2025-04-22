@@ -7,7 +7,6 @@ import {MyNFT} from "../src/MyNFT.sol";
 import "@pythnetwork/pyth-sdk-solidity/MockPyth.sol";
 
 contract MyNFTTest is Test {
-    
     MyNFT public nft;
     MockPyth public mockPyth;
     uint256 expectedPriceInWei;
@@ -21,14 +20,14 @@ contract MyNFTTest is Test {
     int32 public constant ETH_MOCK_EXPO = -8;
 
     address user = address(0x123);
-    
+
     function setUp() public {
         mockPyth = new MockPyth(60, 1);
-        
+
         bytes[] memory priceUpdateDataArray = new bytes[](1);
         priceUpdateDataArray[0] = mockPyth.createPriceFeedUpdateData(
-            ETH_USD_PRICE_ID, 
-            ETH_MOCK_PRICE, 
+            ETH_USD_PRICE_ID,
+            ETH_MOCK_PRICE,
             ETH_MOCK_CONF,
             ETH_MOCK_EXPO,
             ETH_MOCK_PRICE,
@@ -42,7 +41,7 @@ contract MyNFTTest is Test {
 
         // Compute the price needed
         expectedPriceInWei = (uint256(uint64(ETH_MOCK_PRICE)) * 1e18) / (10 ** uint8(uint32(-ETH_MOCK_EXPO)));
-        expectedPriceInWei = (TOKEN_PRICE_USDC * ETH_DECIMALS * 1e18) / expectedPriceInWei; 
+        expectedPriceInWei = (TOKEN_PRICE_USDC * ETH_DECIMALS * 1e18) / expectedPriceInWei;
         expectedPriceInWei = expectedPriceInWei / 1e6;
 
         // Add some token to the user
@@ -70,10 +69,10 @@ contract MyNFTTest is Test {
         vm.startPrank(user);
 
         vm.deal(user, expectedPriceInWei + 1000);
-        
+
         nft.buy{value: expectedPriceInWei + 1000}();
         assertEq(nft.balanceOf(user), 1);
-        assertEq(user.balance, 1000);  // Should refund the user
+        assertEq(user.balance, 1000); // Should refund the user
 
         vm.stopPrank();
     }
@@ -83,8 +82,8 @@ contract MyNFTTest is Test {
 
         bytes[] memory pythPriceUpdate = new bytes[](1);
         pythPriceUpdate[0] = mockPyth.createPriceFeedUpdateData(
-            ETH_USD_PRICE_ID, 
-            ETH_MOCK_PRICE + 1e9,  // 1602_73959552
+            ETH_USD_PRICE_ID,
+            ETH_MOCK_PRICE + 1e9, // 1602_73959552
             ETH_MOCK_CONF,
             ETH_MOCK_EXPO,
             ETH_MOCK_PRICE + 1e9,
@@ -100,11 +99,11 @@ contract MyNFTTest is Test {
 
     function testRevertOnHighConfidence() public {
         vm.startPrank(user);
-        
+
         bytes[] memory pythPriceUpdate = new bytes[](1);
         pythPriceUpdate[0] = mockPyth.createPriceFeedUpdateData(
-            ETH_USD_PRICE_ID, 
-            ETH_MOCK_PRICE, 
+            ETH_USD_PRICE_ID,
+            ETH_MOCK_PRICE,
             ETH_MOCK_CONF * 1e3,
             ETH_MOCK_EXPO,
             ETH_MOCK_PRICE,
@@ -117,5 +116,4 @@ contract MyNFTTest is Test {
 
         vm.stopPrank();
     }
-
 }
