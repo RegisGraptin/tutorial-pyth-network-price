@@ -25,14 +25,22 @@ contract MyNFT is ERC20 {
     }
 
     function buy() public payable {
-        
+
         PythStructs.Price memory price = pyth.getPriceNoOlderThan(
             ethUsdPriceId,
             60  // in seconds
         );
     
+        // ETH price will be a positive value
+        uint256 priceValue = uint256(uint64(price.price));
+        uint256 conf = uint256(price.conf);
+
+        // Check confidence interval (<= 2%)
+        uint256 confRatio = (conf * 1e6) / priceValue;
+        require(confRatio <= 20_000, "Price confidence too high");
+
         // Compute the expected number of wei for the given price
-        uint256 ethUsdPrice = (uint256(uint64(price.price)) * PRICE_PRECISION) / (10 ** uint8(uint32(-price.expo)));
+        uint256 ethUsdPrice = (priceValue * PRICE_PRECISION) / (10 ** uint8(uint32(-price.expo)));
         uint256 requiredWeiPayment = (TOKEN_PRICE_USDC * ETH_DECIMALS * PRICE_PRECISION) / (ethUsdPrice * USDC_DECIMALS);
 
         if (msg.value < requiredWeiPayment) revert InsufficientFee();
@@ -47,7 +55,6 @@ contract MyNFT is ERC20 {
     function updateAndBuy(bytes[] calldata pythPriceUpdate) external payable {
         uint256 updateFee = pyth.getUpdateFee(pythPriceUpdate);
         pyth.updatePriceFeeds{ value: updateFee }(pythPriceUpdate);
-    
         buy();
     }
 }
